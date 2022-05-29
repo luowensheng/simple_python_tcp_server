@@ -1,12 +1,14 @@
 import base64
 import os
+from typing import Union
 
 import numpy as np
-from server import Server, Request, ResponseWriter
+from server import Server, Request, ResponseWriter, Router
 import cv2
 
 
-app = Server()
+app = Server(base_url="/cars")
+router = Router(base_url="/router")
 
 
 def image_to_base64(img: np.ndarray) -> bytes:
@@ -16,18 +18,30 @@ def image_to_base64(img: np.ndarray) -> bytes:
 
 cap = cv2.VideoCapture(0)
 
+@router.get("/")
+def index()->Union[str, dict]:
+    return "Hello World"
+
+@app.get("/")
+def index()->Union[str, dict]:
+    return "Hello World"
+
+@app.get() # /about
+def about()->Union[str, dict]:
+    return "about"    
+
 @app.get("/streaming/ws")
-def js(rw:ResponseWriter, r:Request):
+def streamingws():
     ret, frame = cap.read()
     img_b64  = image_to_base64(frame)
-    rw.setJsonContent({"img": f"data:image/png;base64,{img_b64}", "continue": ret})
+    return {"img": f"data:image/png;base64,{img_b64}", "continue": ret}
     
 
 @app.get("/streaming")
-def streaming(rw:ResponseWriter, r:Request):
+def streaming():
     jspath = os.path.join(__file__, "../public/stream.js")
     file= (open(jspath, 'r').read())
-    rw.setContent(f"""
+    return (f"""
                 <img id="image" src="" alt="">
                 <script>{file}</script>
                 """)
@@ -35,16 +49,15 @@ def streaming(rw:ResponseWriter, r:Request):
  
 
 @app.get("/img")
-def go_to_url(rw:ResponseWriter, r:Request):
+def view_img():
     path = os.path.join(__file__, "../../data/img.png")
-    
     img_b64  = image_to_base64(cv2.imread(path))
-    rw.setContent(f"""
+    return (f"""
                   <img src="data:image/png;base64,{img_b64}">
                   """)
 
 
-@app.get("/url")
+@app.get("/url", params=True)
 def go_to_url(rw:ResponseWriter, r:Request):
     
     rw.setContent(  """
@@ -61,12 +74,17 @@ def go_to_url(rw:ResponseWriter, r:Request):
                     """)
 
 @app.get("/api")
-def go_to_url(rw:ResponseWriter, r:Request):
-    rw.setJsonContent({"cars":"cool"})
+def go_to_url():
+    return {"cars":"cool"}
 
 
-@app.get("/api/request")
+@app.get("/api/request", params=True)
 def go_to_url(rw:ResponseWriter, r:Request):
     rw.setJsonContent(r.toJson())
-  
-app.run()
+ 
+if __name__ == '__main__': 
+    # app+= router
+    app.add_subrouter("/subrouter", router)
+    # app.showUrlMapping()
+    app.run()
+    # cap.release()

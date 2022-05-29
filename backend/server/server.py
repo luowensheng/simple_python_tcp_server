@@ -1,24 +1,15 @@
+import pprint
 import socket
 from threading import Thread
-from typing import Any
+from .router import Router
 from .request_details import Request
-import inspect 
 from .response_writer import ResponseWriter
 
-class Handler:
-
-  def __init__(self, function) -> None:
-     self.function = function
-     self.params = inspect.getfullargspec(function)
-
-  def __call__(self, *args: Any, **kwds: Any) -> Any:
-     return self.function(*args, **kwds)   
-
-class Server :
-  def __init__(self, buffer_size=1024):
-      self.buffer_size = buffer_size
-      self.urlMapping = {"GET":{}, "PUT":{}, "POST":{}, "DELETE":{}}
-
+class Server(Router) :
+  def __init__(self, buffer_size=1024, **kwargs):
+       super().__init__(**kwargs)
+       self.buffer_size = buffer_size
+    
   
   def run(self, port=8500, host='localhost', backlog=1, max_calls=2**64):
     
@@ -40,18 +31,17 @@ class Server :
     
       responseWriter = ResponseWriter()
       request = Request(client.recv(self.buffer_size).decode("utf8"))
-      
+      for method in self.urlMapping.keys():
+          pprint.pprint(self.urlMapping[method].keys())
       try:
         self.processRequest(responseWriter, request)
-      except Exception as e:
+      except AssertionError as e:
          print(e.with_traceback(None))
          responseWriter.setStatusCode(500)
       
       client.sendall(responseWriter.getResponse().encode())
       client.close()
         
-
-
 
   def handleFavicon(self, rw: ResponseWriter, r: Request):
     fav = """
@@ -70,24 +60,14 @@ class Server :
       if ("favicon.i" in r.uri): 
           return self.handleFavicon(rw, r)
 
-      handler = self.urlMapping[r.method].get(r.uri)
+      handler = self.get_handler_for_url(r.method, r.uri)
       if (not handler is None):  
          return handler(rw, r)
      
-      rw.setContent(f"Nothing for {r.uri}")  
+      rw.setContent(f"Nothing for {r.uri} for Method '{r.method}'")  
       print("processed")
 
-  def get(self, pattern):
-      return lambda function: self.__add_to_mapping("GET", pattern, function)
-
-  def post(self, pattern):
-      return lambda function: self.__add_to_mapping("POST", pattern, function)
-
-  def put(self, pattern):
-      return lambda function: self.__add_to_mapping("PUT", pattern, function)
-
-  def delete(self, pattern):
-      return lambda function: self.__add_to_mapping("DELETE", pattern, function)
-
-  def __add_to_mapping(self, method, pattern, function):
-      self.urlMapping[method][pattern] = Handler(function)
+  def get_handler_for_url(self, method:str, uri:str):
+       uri = self.process_pattern(uri)
+       return self.urlMapping[method].get(uri)
+           

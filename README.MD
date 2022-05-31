@@ -1,4 +1,4 @@
-```
+```python
 app = Server(base_url="/cars")
 router = Router(base_url="/router")
 

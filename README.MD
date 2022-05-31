@@ -1,12 +1,4 @@
-import base64
-import os
-from typing import Union
-
-import numpy as np
-from server import Server, Request, ResponseWriter, Router
-import cv2
-
-
+```
 app = Server(base_url="/cars")
 router = Router(base_url="/router")
 
@@ -85,3 +77,5 @@ def go_to_url(rw:ResponseWriter, r:Request):
 if __name__ == '__main__': 
     app.add_subrouter("/subrouter", router)
     app.run()
+
+```

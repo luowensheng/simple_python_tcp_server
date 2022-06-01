@@ -30,13 +30,12 @@ class Server(Router) :
   def handleConnection(self, client:socket.socket):
     
       responseWriter = ResponseWriter()
-      request = Request(client.recv(self.buffer_size).decode("utf8"))
-      for method in self.urlMapping.keys():
-          pprint.pprint(self.urlMapping[method].keys())
+
       try:
+        request = Request(client.recv(self.buffer_size).decode("utf8"))
         self.processRequest(responseWriter, request)
-      except AssertionError as e:
-         print(e.with_traceback(None))
+      except Exception as e:
+         print(e)
          responseWriter.setStatusCode(500)
       
       client.sendall(responseWriter.getResponse().encode())
@@ -44,16 +43,16 @@ class Server(Router) :
         
 
   def handleFavicon(self, rw: ResponseWriter, r: Request):
-    fav = """
-            <html>
-            <head>
-            </head>
-            <body>
-            <img src="https://img.icons8.com/ios-filled/344/internet.png">
-            </body>
-            </html>
-         """
-    rw.setContent(fav)
+      fav = """
+              <html>
+              <head>
+              </head>
+              <body>
+              <img src="https://img.icons8.com/ios-filled/344/internet.png">
+              </body>
+              </html>
+          """
+      rw.setContent(fav)
 
   def processRequest(self, rw: ResponseWriter, r: Request):
       

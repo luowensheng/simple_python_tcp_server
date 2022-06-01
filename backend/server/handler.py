@@ -1,6 +1,7 @@
+from __future__ import annotations
 import inspect
 import json
-from typing import Any
+from typing import Any, List
 from .request_details import Request
 from .response_writer import ResponseWriter
 
@@ -15,24 +16,50 @@ class Options :
    def __repr__(self) -> str:
      return str(self) 
 
-   
+class ParamsException(Exception): pass
+  
 
 class Handler:
 
-   def __init__(self, function, params=True) -> None:
+   def __init__(self, function, pattern:str) -> None:
    
-     self.options = Options(params=params) 
-     self.function = self.__handle_for_options(function)
+     self.__pattern = pattern 
      self.__inspected_params = inspect.getfullargspec(function)
-
-   def __handle_for_options(self, func):
+     self.function = self.__create_handle(function)
+     
+   def __create_handle(self, func):
       
-      if self.options.params:
-         return lambda rw, r: func(rw, r) 
-      else :
-         return lambda rw, _: self.processContent(func(), rw)
+      annotations =self.__inspected_params.annotations
+      filtered = dict(filter(lambda items: items[0]!='return', annotations.items()))
+
+      params: List[type] = sorted(filtered.values(), key=lambda x: str(x))
+      num_params = len(params)
+      
+      if num_params ==2 :
+         
+         sorted_params = sorted(params, key=lambda x: str(x))
+         params_1_is_r = sorted_params[0].__name__ == Request.__name__
+         params_2_is_rw = sorted_params[1].__name__, ResponseWriter.__name__
+         
+         if params_1_is_r and params_2_is_rw:
             
-   def processContent(self, content, rw):   
+            if params_1_is_r:   
+             
+               return lambda rw, r: func(r, rw) 
+           
+            else:
+             
+               return lambda rw, r: func(rw, r) 
+            
+      if num_params==0 :
+         return lambda rw, _: self.processContent(func(), rw)
+   
+      raise ParamsException(f"The parameters {params} are not yet supported! Check for any mistakes.\n\n{self.__inspected_params.annotations.get('return')}\n\n")
+      
+            
+            
+   def processContent(self, content, rw): 
+        
          if isinstance(content, dict):
             return rw.setJsonContent(content)   
          return rw.setContent(content) 

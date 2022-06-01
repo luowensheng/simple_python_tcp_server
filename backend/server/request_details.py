@@ -1,6 +1,8 @@
 
 import json
 
+class InvalidRequestFormat(Exception): pass
+     
 
 class Request:
   def __init__(self, reqStr: str):
@@ -9,11 +11,11 @@ class Request:
 
   def parseRequest(self, reqStr:str):
       splitStr = reqStr.split("\n")
-      self.requestLine(splitStr[0])
       try:
+        self.requestLine(splitStr[0])
         self.parseOptionalHeaders(splitStr[1:])
-      except:
-        print(reqStr, "\nfailed")
+      except IndexError:
+        raise InvalidRequestFormat
         
   def requestLine(self, line: str):
       lineSplit = line.split(" ")

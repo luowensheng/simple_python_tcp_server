@@ -13,19 +13,19 @@ class Router :
   def showUrlMapping(self):
       pprint.pprint(self.urlMapping)
       
-  def get(self, pattern:Union[None, str]=None, params=False):
-      return lambda function: self.__add_to_mapping("GET", pattern, function, params)
+  def get(self, pattern:Union[None, str]=None):
+      return lambda function: self.__add_to_mapping("GET", pattern, function)
 
-  def post(self, pattern:Union[None, str]=None, params=False):
-      return lambda function: self.__add_to_mapping("POST", pattern, function, params)
+  def post(self, pattern:Union[None, str]=None):
+      return lambda function: self.__add_to_mapping("POST", pattern, function)
 
-  def put(self, pattern:Union[None, str]=None, params=False):
-      return lambda function: self.__add_to_mapping("PUT", pattern, function, params)
+  def put(self, pattern:Union[None, str]=None):
+      return lambda function: self.__add_to_mapping("PUT", pattern, function)
 
-  def delete(self, pattern:Union[None, str]=None, params=False):
-      return lambda function: self.__add_to_mapping("DELETE", pattern, function, params)
+  def delete(self, pattern:Union[None, str]=None):
+      return lambda function: self.__add_to_mapping("DELETE", pattern, function)
 
-  def __add_to_mapping(self, method, pattern, function, params=False):
+  def __add_to_mapping(self, method, pattern, function):
              
          if pattern is None:
              pattern =  f"/"+str(function.__name__)
@@ -34,7 +34,7 @@ class Router :
          if isinstance(function, Handler):   
             self.urlMapping[method][f"{self.base_url}{pattern}"] = function
          else:   
-            self.urlMapping[method][f"{self.base_url}{pattern}"] = Handler(function, params)
+            self.urlMapping[method][f"{self.base_url}{pattern}"] = Handler(function, pattern)
             
   def process_pattern(self, pattern):
       

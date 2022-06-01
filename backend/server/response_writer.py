@@ -1,7 +1,6 @@
 
 import json
-import socket
-from typing import Callable, Tuple, Union
+from typing import Union
 
 
 class ResponseWriter:

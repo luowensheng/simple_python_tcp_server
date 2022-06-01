@@ -1,5 +1,5 @@
 ```python
-app = Server(base_url="/cars")
+app = Server()
 router = Router(base_url="/router")
 
 
@@ -49,11 +49,11 @@ def view_img():
                   """)
 
 
-@app.get("/url", params=True)
-def go_to_url(rw:ResponseWriter, r:Request):
+@app.get("/url")
+def go_to_url(r:Request, rw:ResponseWriter):
     
     rw.setContent(  """
-                        <h1><h1>
+                        <h1>?<h1>
                         <script>
                             const h1 = document.querySelector("h1");
                             var content = [1, 2]
@@ -70,9 +70,10 @@ def go_to_url():
     return {"cars":"cool"}
 
 
-@app.get("/api/request", params=True)
+@app.get("/api/request")
 def go_to_url(rw:ResponseWriter, r:Request):
     rw.setJsonContent(r.toJson())
+ 
  
 if __name__ == '__main__': 
     app.add_subrouter("/subrouter", router)
